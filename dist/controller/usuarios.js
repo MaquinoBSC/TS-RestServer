@@ -73,15 +73,46 @@ const postUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
 });
 exports.postUsuario = postUsuario;
 // Actualizar los datos de un usuario
-const putUsuario = (req, res) => {
+const putUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const { body } = req;
-    res.json({
-        msg: 'putUsuario',
-        body,
-        id,
-    });
-};
+    try {
+        // Verificar que exista un usuario que acualizar
+        const usuario = yield usuario_1.default.findByPk(id);
+        if (!usuario) {
+            return res.status(404).json({
+                success: false,
+                msg: `No existe usuario con id: ${id}`
+            });
+        }
+        // Verificar que no se dupliquen los emails en base de datos
+        if (body.email) {
+            const existeEmail = yield usuario_1.default.findOne({
+                where: {
+                    email: body.email
+                }
+            });
+            if ((existeEmail === null || existeEmail === void 0 ? void 0 : existeEmail.get().id) != id) {
+                return res.status(400).json({
+                    success: false,
+                    msg: `Ya existe un usuario con email ${body.email}`
+                });
+            }
+        }
+        yield usuario.update(body);
+        res.json({
+            success: true,
+            usuario,
+        });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            msg: 'Hable con el admin'
+        });
+    }
+});
 exports.putUsuario = putUsuario;
 // Eliminar un usuario
 const deleteUsuario = (req, res) => {
