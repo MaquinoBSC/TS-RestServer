@@ -16,7 +16,11 @@ exports.deleteUsuario = exports.putUsuario = exports.postUsuario = exports.getUs
 const usuario_1 = __importDefault(require("../models/usuario"));
 //Obtener todos los usuarios
 const getUsuarios = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const usuarios = yield usuario_1.default.findAll();
+    const usuarios = yield usuario_1.default.findAll({
+        where: {
+            estado: true
+        }
+    });
     res.json({
         success: true,
         usuarios,
@@ -28,10 +32,18 @@ const getUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
     const { id } = req.params;
     const usuario = yield usuario_1.default.findByPk(id);
     if (usuario) {
-        res.json({
-            success: true,
-            usuario
-        });
+        if (!(usuario === null || usuario === void 0 ? void 0 : usuario.get().estado)) {
+            return res.status(404).json({
+                success: false,
+                msg: `Usuario no acivo. Contacte al admin`
+            });
+        }
+        else {
+            res.json({
+                success: true,
+                usuario
+            });
+        }
     }
     else {
         res.status(404).json({
@@ -115,12 +127,33 @@ const putUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.putUsuario = putUsuario;
 // Eliminar un usuario
-const deleteUsuario = (req, res) => {
+const deleteUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    res.json({
-        msg: 'deleteUsuario',
-        id,
-    });
-};
+    try {
+        const usuario = yield usuario_1.default.findByPk(id);
+        if (!usuario) {
+            return res.status(404).json({
+                success: false,
+                msg: `No se encontro usuario con el id: ${id}`
+            });
+        }
+        // Eliminacion fisica
+        // await usuario.destroy();
+        // Eliminacion logica
+        yield usuario.update({
+            estado: false
+        });
+        res.json({
+            success: true,
+            usuario,
+        });
+    }
+    catch (error) {
+        res.json({
+            success: false,
+            msg: 'Hable con el admin',
+        });
+    }
+});
 exports.deleteUsuario = deleteUsuario;
 //# sourceMappingURL=usuarios.js.map

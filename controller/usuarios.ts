@@ -4,7 +4,12 @@ import Usuario from '../models/usuario';
 
 //Obtener todos los usuarios
 export const getUsuarios= async ( req: Request, res: Response )=> {
-    const usuarios= await Usuario.findAll();
+    const usuarios= await Usuario.findAll({
+        where: {
+            estado: true
+        }
+    });
+
     res.json({
         success: true,
         usuarios,
@@ -14,13 +19,21 @@ export const getUsuarios= async ( req: Request, res: Response )=> {
 // Obtener un usuario por medio de su id
 export const getUsuario= async ( req: Request, res: Response )=> {
     const { id }= req.params;
-    const usuario= await Usuario.findByPk( id );
+    const usuario= await Usuario.findByPk( id );    
 
-    if( usuario ){
-        res.json({
-            success: true,
-            usuario
-        });
+    if( usuario ){        
+        if( !usuario?.get().estado ){
+            return res.status( 404 ).json({
+                success: false,
+                msg: `Usuario no acivo. Contacte al admin`
+            })
+        }
+        else {
+            res.json({
+                success: true,
+                usuario
+            });
+        }
     }
     else{
         res.status( 404 ).json({
@@ -116,11 +129,36 @@ export const putUsuario= async ( req: Request, res: Response )=> {
 }
 
 // Eliminar un usuario
-export const deleteUsuario= ( req: Request, res: Response )=> {
+export const deleteUsuario= async ( req: Request, res: Response )=> {
     const { id }= req.params;
 
-    res.json({
-        msg: 'deleteUsuario',
-        id,
-    });
+    try {
+        const usuario= await Usuario.findByPk( id );
+        if( !usuario ){
+            return res.status( 404 ).json({
+                success: false,
+                msg: `No se encontro usuario con el id: ${ id }`
+            })
+        }
+        
+        // Eliminacion fisica
+        // await usuario.destroy();
+
+        // Eliminacion logica
+        await usuario.update({
+            estado: false
+        });
+
+        res.json({
+            success: true,
+            usuario,
+        });
+
+    } catch (error) {
+        res.json({
+            success: false,
+            msg: 'Hable con el admin',
+        });
+    }
+
 }
