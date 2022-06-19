@@ -32,13 +32,40 @@ export const getUsuario= async ( req: Request, res: Response )=> {
 }
 
 // Crear un usuario
-export const postUsuario= ( req: Request, res: Response )=> {
+export const postUsuario= async ( req: Request, res: Response )=> {
     const { body }= req;
 
-    res.json({
-        msg: 'postUsuario',
-        body,
-    });
+    try {
+        const existeEmail= await Usuario.findOne({
+            where: {
+                email: body.email
+            }
+        });
+
+        if( existeEmail ){
+            return res.status(400).json({
+                success: false,
+                msg: `Ya existe un usuario con email ${body.email}`
+            })
+        }
+
+        const usuario= Usuario.build( body );
+        await usuario.save();
+
+        res.json({
+            success: true,
+            usuario,
+        });
+
+    } catch (error) {
+        console.log(error);
+        
+        res.status(500).json({
+            success: false,
+            msg: 'Hable con el admin'
+        });
+    }
+
 }
 
 // Actualizar los datos de un usuario

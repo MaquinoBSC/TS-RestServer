@@ -42,13 +42,35 @@ const getUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
 });
 exports.getUsuario = getUsuario;
 // Crear un usuario
-const postUsuario = (req, res) => {
+const postUsuario = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { body } = req;
-    res.json({
-        msg: 'postUsuario',
-        body,
-    });
-};
+    try {
+        const existeEmail = yield usuario_1.default.findOne({
+            where: {
+                email: body.email
+            }
+        });
+        if (existeEmail) {
+            return res.status(400).json({
+                success: false,
+                msg: `Ya existe un usuario con email ${body.email}`
+            });
+        }
+        const usuario = usuario_1.default.build(body);
+        yield usuario.save();
+        res.json({
+            success: true,
+            usuario,
+        });
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({
+            success: false,
+            msg: 'Hable con el admin'
+        });
+    }
+});
 exports.postUsuario = postUsuario;
 // Actualizar los datos de un usuario
 const putUsuario = (req, res) => {
